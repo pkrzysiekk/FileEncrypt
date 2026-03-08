@@ -4,15 +4,15 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"encoding/hex"
 	"log"
+
+	"golang.org/x/crypto/argon2"
 )
 
-func EncryptFile(password string, fileToEncrypt *[]byte) []byte {
-	key, err := hex.DecodeString(password)
-	if err != nil {
-		log.Fatal(err)
-	}
+func EncryptFile(password string, fileToEncrypt []byte) []byte {
+	salt := make([]byte, 16)
+	rand.Read(salt)
+	key := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		log.Fatal(err)
@@ -28,6 +28,8 @@ func EncryptFile(password string, fileToEncrypt *[]byte) []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
-	encrypted := gcm.Seal(nonce, nonce, *fileToEncrypt, nil)
-	return encrypted
+	encrypted := gcm.Seal(nil, nonce, fileToEncrypt, nil)
+	dataToSave := append(salt, nonce...)
+	dataToSave = append(dataToSave, encrypted...)
+	return dataToSave
 }
