@@ -19,14 +19,15 @@ func main() {
 		log.Fatal("Not enough arguments, provide command,filename and password")
 	}
 	cmd, filename, password := os.Args[1], os.Args[2], os.Args[3]
+	absPath := utils.GetAbsolutePath(filename)
 	switch cmd {
 	case "encrypt":
 		if utils.IsEncrypted(filename) {
 			log.Fatal(FileAlreadyEncryptedError)
 		}
-		text := data.ReadFile(filename)
+		text := data.ReadFile(absPath)
 		encrypted := crypto.EncryptFile(password, text)
-		filenameToSave := utils.TrimExtension(filename) + ".enc"
+		filenameToSave := utils.TrimExtension(absPath) + ".enc"
 		err := os.WriteFile(filenameToSave, encrypted, 0o766)
 		if err != nil {
 			log.Fatal(err)
@@ -36,9 +37,9 @@ func main() {
 		if !utils.IsEncrypted(filename) {
 			log.Fatal(FileNotEncryptedError)
 		}
-		text := data.ReadFile(filename)
+		text := data.ReadFile(absPath)
 		decrypted := crypto.DecryptFile(text, password)
-		filenameToSave := utils.TrimExtension(filename) + "_dec.txt"
+		filenameToSave := utils.TrimExtension(absPath) + "_dec.txt"
 		err := os.WriteFile(filenameToSave, decrypted, 0o766)
 		if err != nil {
 			log.Fatal(err)
